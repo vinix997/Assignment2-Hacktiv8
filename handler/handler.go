@@ -55,8 +55,7 @@ func (h *OrderHandler) createOrderHandler(w http.ResponseWriter, r *http.Request
 		Ordered_at:    order.Ordered_at,
 	}, order.Items)
 
-	w.Header().Add("Content-Type", "application/json")
-	w.Write([]byte("Created order"))
+	w.Write([]byte("Order created successfully"))
 }
 
 func (h *OrderHandler) updateOrderHandler(w http.ResponseWriter, r *http.Request, id interface{}) {
@@ -71,6 +70,7 @@ func (h *OrderHandler) updateOrderHandler(w http.ResponseWriter, r *http.Request
 		Ordered_at:    order.Ordered_at,
 	}, order.Items, id)
 
+	w.Write([]byte("Order updated successfully"))
 }
 
 func (h *OrderHandler) getOrderHandler(w http.ResponseWriter, r *http.Request) {
