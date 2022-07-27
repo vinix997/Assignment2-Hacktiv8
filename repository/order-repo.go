@@ -2,22 +2,18 @@ package repository
 
 import (
 	"ass2/entity"
+	"ass2/service"
 	"context"
 	"database/sql"
 	"fmt"
 	"time"
 )
 
-type OrderRepository interface {
-	CreateOrder(ctx context.Context, order *entity.Order, items []entity.Item) *entity.Order
-	UpdateOrder(ctx context.Context, order *entity.Order, items []entity.Item, id interface{}) *entity.Order
-}
-
 type repo struct {
 	sql *sql.DB
 }
 
-func NewOrderRepository(sqlDB *sql.DB) OrderRepository {
+func NewOrderRepository(sqlDB *sql.DB) service.OrderRepository {
 	return &repo{sql: sqlDB}
 }
 

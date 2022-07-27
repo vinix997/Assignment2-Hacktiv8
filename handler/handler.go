@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"sync"
 
 	"github.com/gorilla/mux"
 )
@@ -76,7 +77,6 @@ func (h *OrderHandler) updateOrderHandler(w http.ResponseWriter, r *http.Request
 func (h *OrderHandler) getOrderHandler(w http.ResponseWriter, r *http.Request) {
 	query := "SELECT ORDER_ID, CUSTOMER_NAME, ORDERED_AT FROM ORDERS"
 	rows, err := h.sql.QueryContext(r.Context(), query)
-
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -90,32 +90,35 @@ func (h *OrderHandler) getOrderHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		orders = append(orders, &order)
 	}
-
+	var wg sync.WaitGroup
+	wg.Add(len(orders))
 	for i, v := range orders {
-		query := "SELECT ITEM_ID, ITEM_CODE, DESCRIPTION, QUANTITY, ORDER_ID FROM ITEMS WHERE ORDER_ID = ?"
-		rows, err := h.sql.QueryContext(r.Context(), query, v.Order_id)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer rows.Close()
-
-		var items []entity.Item
-		for rows.Next() {
-			var item entity.Item
-			if err := rows.Scan(&item.Item_id, &item.Item_code, &item.Description, &item.Quantity, &item.Order_id); err != nil {
+		go func(x int) {
+			defer wg.Done()
+			query := "SELECT ITEM_ID, ITEM_CODE, DESCRIPTION, QUANTITY, ORDER_ID FROM ITEMS WHERE ORDER_ID = ?"
+			rows, err := h.sql.QueryContext(r.Context(), query, v.Order_id)
+			if err != nil {
 				log.Fatal(err)
 			}
-			items = append(items, item)
-		}
-		orders[i].Items = items
-	}
+			defer rows.Close()
 
+			var items []entity.Item
+			for rows.Next() {
+				var item entity.Item
+				if err := rows.Scan(&item.Item_id, &item.Item_code, &item.Description, &item.Quantity, &item.Order_id); err != nil {
+					log.Fatal(err)
+				}
+				items = append(items, item)
+			}
+			orders[x].Items = items
+		}(i)
+	}
+	wg.Wait()
 	jsonData, _ := json.Marshal(&orders)
 	w.Write(jsonData)
 }
 
 func (h *OrderHandler) deleteOrderHandler(w http.ResponseWriter, r *http.Request, id interface{}) {
-
 	query := "DELETE FROM ORDERS WHERE ORDER_ID = ?"
 	_, err := h.sql.ExecContext(r.Context(), query, id)
 	if err != nil {
