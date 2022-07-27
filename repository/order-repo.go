@@ -39,14 +39,14 @@ func (o *repo) UpdateOrder(ctx context.Context, order *entity.Order, item []enti
 	updateOrderQuery := "UPDATE ORDERS SET CUSTOMER_NAME = ? , ORDERED_AT = ? WHERE ORDER_ID = ? "
 	_, err := o.sql.ExecContext(ctx, updateOrderQuery, order.Customer_name, time.Now(), id)
 	if err != nil {
-		panic(err)
+		return nil
 	}
 	fmt.Printf("%v %v", order, item)
 	updateItemQuery := "UPDATE ITEMS SET ITEM_CODE = ?, DESCRIPTION = ?, QUANTITY = ? where ITEM_ID = ? "
 	for _, v := range item {
 		_, err := o.sql.QueryContext(ctx, updateItemQuery, v.Item_code, v.Description, v.Quantity, v.Item_id)
 		if err != nil {
-			panic(err)
+			return nil
 		}
 	}
 	return order

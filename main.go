@@ -5,10 +5,14 @@ import (
 	"ass2/repository"
 	"ass2/service"
 	"database/sql"
+	"fmt"
+	"log"
 	"net/http"
+	"os"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
 )
 
 const PORT = ":8080"
@@ -27,8 +31,20 @@ func main() {
 	http.ListenAndServe(PORT, nil)
 }
 
+func getEnvVar(key string) string {
+	err := godotenv.Load(".env")
+
+	if err != nil {
+		log.Fatalf("Error loading .env file")
+	}
+	return os.Getenv(key)
+}
+
 func Connection() *sql.DB {
-	database, err := sql.Open("mysql", "root:admin123@tcp(localhost:3306)/orders_by?parseTime=true")
+	user := getEnvVar("DB_USERNAME")
+	password := getEnvVar("PASSWORD")
+	db := getEnvVar("DB_NAME")
+	database, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(localhost:3306)/%s?parseTime=true", user, password, db))
 	if err != nil {
 		panic(err)
 	}
